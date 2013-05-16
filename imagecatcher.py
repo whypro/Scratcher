@@ -97,10 +97,10 @@ class ImageCatcher(object):
                     break
         except KeyboardInterrupt:
             self.interruptEvent.set()
-            return
+            raise KeyboardInterrupt
         except:
             print u"未知异常，主线程中止"
-            return
+            raise
 
         ###########################################
         # 单线程
@@ -217,88 +217,97 @@ class ImageCatcher(object):
     
     # 下载图片函数
     # 线程函数，要保证线程安全
-    def _saveImage(self, url, verbose=True):
+    def _saveImage(self, url, override=False, verbose=True):
         filename = self._convertImageUrl(url)
         cfg_filename = filename + ".cfg"
         tmp_filename = filename + ".tmp"
         
         if os.path.exists(filename):
-            self.outLock.acquire()
-            print u"文件已存在：%s" % filename
-            self.outLock.release()
-        else:
-            isResume = False
-            if os.path.exists(cfg_filename) and os.path.exists(tmp_filename):
-                (file_size, downloaded_size) = self._readResumeCfg(cfg_filename)
-                if file_size > downloaded_size:
-                    isResume = True
-                    
-            # 断点续传
-            if isResume:
-                request_headers = {"Range": "bytes=%d-%d" % (downloaded_size, file_size)}
-                u = uopen(url, headers=request_headers)
-                response_headers = u.info()
-                f = open(tmp_filename, "ab")
-                f.seek(downloaded_size, os.SEEK_SET)     # 文件指针移动到断点处
-            # 开始新的下载
+            if not override:
+                self.outLock.acquire()
+                print u"文件已存在：%s" % filename
+                self.outLock.release()
+                return 
             else:
-                file_size = 0
-                downloaded_size = 0     
-                u = uopen(url)
-                if u is None:
-                    return
-                response_headers = u.info()
-                if "Content-Length" in response_headers:
-                    file_size = int(response_headers["Content-Length"])
-                    self.outLock.acquire()
-                    print u"文件大小：%s" % formatSize(file_size)
-                    self.outLock.release()
-                # 首先保存到临时文件，下载成功后重命名为原文件名
-                f = open(tmp_filename, "wb")
-                
-            self.outLock.acquire()
-            print u"正在下载：%s" % url
-            self.outLock.release()
-            start = clock()
-            try:
-                while True:
-                    if self.interruptEvent.isSet():
-                        raise KeyboardInterrupt
-                    buffer = u.read(DOWNLOAD_BUFFER_SIZE) 
-                    if not buffer:  # EOF
-                        break
-                    downloaded_size += len(buffer);
-                    f.write(buffer)
+                self.outLock.acquire()
+                print u"文件已过期：%s" % filename
+                self.outLock.release()
+                os.remove(filename)
 
-                    # 显示下载进度
-                    if file_size:
-                        print "%2.1f%%\r" % (float(downloaded_size * 100) / file_size),
-                    else:
-                        print "...\r",
-            finally:
-                uclose(u)
-                f.close()
-                cfg_f = open(cfg_filename, "w")
-                cfg_f.write(str(file_size))
-                cfg_f.write("\n")
-                cfg_f.write(str(downloaded_size))
-                cfg_f.write("\n")
-                cfg_f.close()
+        # 准备下载
+        isResume = False
+        if os.path.exists(cfg_filename) and os.path.exists(tmp_filename):
+            (file_size, downloaded_size) = self._readResumeCfg(cfg_filename)
+            if file_size > downloaded_size:
+                isResume = True
+                
+        # 断点续传
+        if isResume:
+            request_headers = {"Range": "bytes=%d-%d" % (downloaded_size, file_size)}
+            u = uopen(url, headers=request_headers)
+            response_headers = u.info()
+            f = open(tmp_filename, "ab")
+            f.seek(downloaded_size, os.SEEK_SET)     # 文件指针移动到断点处
+        # 开始新的下载
+        else:
+            file_size = 0
+            downloaded_size = 0     
+            u = uopen(url)
+            if u is None:
+                return
+            response_headers = u.info()
+            if "Content-Length" in response_headers:
+                file_size = int(response_headers["Content-Length"])
+                self.outLock.acquire()
+                print u"文件大小：%s" % formatSize(file_size)
+                self.outLock.release()
+            # 首先保存到临时文件，下载成功后重命名为原文件名
+            f = open(tmp_filename, "wb")
             
-            os.rename(tmp_filename, filename)
-            self.outLock.acquire()
-            print u"文件已保存：%s" % os.path.abspath(filename)
-            self.outLock.release()
-            # 删除断点续传配置文件
-            if os.path.exists(cfg_filename):
-                os.remove(cfg_filename)
-            end = clock()
-            spend = end - start
-            self.outLock.acquire()
-            print u"耗时：%.2f 秒" % spend
-            print u"平均速度：%.2fKB/s" % (float(downloaded_size) / 1024 / spend)
-            self.outLock.release()
-            self.total_size += file_size
+        self.outLock.acquire()
+        print u"正在下载：%s" % url
+        self.outLock.release()
+        start = clock()
+        try:
+            while True:
+                if self.interruptEvent.isSet():
+                    raise KeyboardInterrupt
+                buffer = u.read(DOWNLOAD_BUFFER_SIZE) 
+                if not buffer:  # EOF
+                    break
+                downloaded_size += len(buffer);
+                f.write(buffer)
+
+                # 显示下载进度
+                if file_size:
+                    print "%2.1f%%\r" % (float(downloaded_size * 100) / file_size),
+                else:
+                    print "...\r",
+        finally:
+            uclose(u)
+            f.close()
+            cfg_f = open(cfg_filename, "w")
+            cfg_f.write(str(file_size))
+            cfg_f.write("\n")
+            cfg_f.write(str(downloaded_size))
+            cfg_f.write("\n")
+            cfg_f.close()
+
+        os.rename(tmp_filename, filename)
+        self.outLock.acquire()
+        print u"文件已保存：%s" % os.path.abspath(filename)
+        self.outLock.release()
+            
+        # 删除断点续传配置文件
+        if os.path.exists(cfg_filename):
+            os.remove(cfg_filename)
+        end = clock()
+        spend = end - start
+        self.outLock.acquire()
+        print u"耗时：%.2f 秒" % spend
+        print u"平均速度：%.2fKB/s" % (float(downloaded_size) / 1024 / spend)
+        self.outLock.release()
+        self.total_size += file_size
 
         
     # 保存信息文件
@@ -329,7 +338,7 @@ class ImageCatcher(object):
 if __name__ == "__main__":
     from ccimagelister import CCImageLister
     from umimagelister import UMImageLister
-    lister = UMImageLister("http://www.umei.cc/p/gaoqing/rihan/20120331152044.htm")
+    lister = UMImageLister("http://www.umei.cc/p/gaoqing/rihan/20130309222555.htm")
     #lister = UMImageLister("http://www.umei.cc/p/gaoqing/cn/20120801211417.htm")
     #lister = CCImageLister("http://ccrt.cc/html/yazhou/hob5097.htm")
     ImageCatcher(lister, "abc", 5)

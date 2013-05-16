@@ -164,8 +164,11 @@ if __name__ == "__main__":
     tasks.append("http://www.airenti.org/Html/Type/2_1.html")
 
     import sys
-    sys.stderr = open("error.log", "w")
-    
+    import time
+    sys.stderr = open("error.log", "a")
+    sys.stderr.write("################################################################\n")
+    sys.stderr.write(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    sys.stderr.write("\n")
     import re
     for task in tasks:
         if re.search("umei.cc", task):
