@@ -327,6 +327,9 @@ class ImageCatcher(object):
                 f.write("\n")
             if verbose:
                 print u"已写入：%s" % filename
+                # 显式地转为 gbk 以便于向控制台输出
+                # info = self.info.encode("gbk", "ignore")
+                # print info
                 print self.info
             return True
         else:
