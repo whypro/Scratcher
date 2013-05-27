@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 import threading
 import Queue
 
@@ -8,7 +9,7 @@ from imagecatcher import ImageCatcher
 from factory import UMFactory, CCFactory, ARTFactory
 
 class SubjectCatcher:
-    def __init__(self, factory, force_update=False):
+    def __init__(self, factory, out_of_date=10, thread_num=10):
         self.factory = factory
         self.subject_lister = factory.createSubjectLister()
         self.dirname = factory.getSavePath()
@@ -21,7 +22,7 @@ class SubjectCatcher:
         self.d_subjects = []
 
         self._createDir(self.dirname, verbose=False)
-        self.downAllSubjects(force_update=force_update)    # 为 True 时强制更新
+        self.downAllSubjects(out_of_date=out_of_date, thread_num=thread_num)    # 过期时间（单位为天数）
         
     # 创建文件夹
     def _createDir(self, dirname, verbose=True):
@@ -60,17 +61,24 @@ class SubjectCatcher:
             print u"已写入：%d 个" % len(subjects)
         return subjects
     
-    # force_update = True 强制从远程更新
-    def downAllSubjects(self, force_update=False, verbose=True):
+    # out_of_date，过期时间，单位为天数
+    def downAllSubjects(self, out_of_date, thread_num, verbose=True):
         filename = self.filename
         d_filename = self.d_filename
         # 通过文件静态获取
-        if os.path.exists(filename) and not force_update:
+        # 文件存在，且未过期
+        if os.path.exists(filename) and (time.time() - os.path.getmtime(filename)) < out_of_date * 24 * 60 * 60:
             if verbose:
                 print u"已存在：%s" % filename
             subjects = self._readSubjectUrls(filename, verbose=False)   # verbose=False
             if verbose:
                 print u"搜索到：%d 个主题" % len(subjects)
+        # 文件过期
+        # 远程读取 url，并保存至文件
+        elif os.path.exists(filename):
+            if verbose:
+                print u"已过期：%s" % filename
+            subjects = self._saveSubjectUrls(filename, verbose=verbose)
         # 远程读取 url，并保存至文件
         else:
             subjects = self._saveSubjectUrls(filename, verbose=verbose)
@@ -91,7 +99,7 @@ class SubjectCatcher:
             if not sub in d_subjects:
                 print u"第 %d 个主题，共 %d 个主题" % (len(d_subjects) + 1, len(subjects))
                 imageLister = self.factory.createImageLister(sub)
-                imageCatcher = ImageCatcher(imageLister, self.dirname)
+                imageCatcher = ImageCatcher(imageLister, self.dirname, thread_num=thread_num)
                 d_subjects.append(sub)
                 self._saveSubjectUrls(d_filename, subjects=d_subjects)
                 
@@ -179,5 +187,5 @@ if __name__ == "__main__":
             factory = ARTFactory(task)
         else:
             raise
-        catcher = SubjectCatcher(factory, force_update=False)
+        catcher = SubjectCatcher(factory, out_of_date=10, thread_num=10)
 

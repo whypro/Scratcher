@@ -148,7 +148,7 @@ class ImageCatcher(object):
                 self.outLock.release()
                 break
             except:
-                print u"未知错误，线程 %s 已中止" % t_name
+                print u"未知异常，线程 %s 已中止" % t_name
                 raise
         if False:
             self.outLock.acquire()
