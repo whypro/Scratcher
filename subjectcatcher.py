@@ -98,10 +98,22 @@ class SubjectCatcher:
         for sub in subjects:
             if not sub in d_subjects:
                 print u"第 %d 个主题，共 %d 个主题" % (len(d_subjects) + 1, len(subjects))
-                imageLister = self.factory.createImageLister(sub)
-                imageCatcher = ImageCatcher(imageLister, self.dirname, thread_num=thread_num)
-                d_subjects.append(sub)
-                self._saveSubjectUrls(d_filename, subjects=d_subjects)
+                try:
+                    imageLister = self.factory.createImageLister(sub)
+                # 页面不合法，如返回 404 页面
+                except AttributeError:
+                    print u"imageLister 创建失败：%s" % sub
+                    f = open("except.txt", "a")
+                    f.write(sub)
+                    f.write("\n")
+                    f.close()
+                    continue
+                except:
+                    raise
+                else:
+                    imageCatcher = ImageCatcher(imageLister, self.dirname, thread_num=thread_num)
+                    d_subjects.append(sub)
+                    self._saveSubjectUrls(d_filename, subjects=d_subjects)
                 
 
 """
