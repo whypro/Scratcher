@@ -178,11 +178,11 @@ if __name__ == "__main__":
     tasks.append("http://www.umei.cc/p/gaoqing/gangtai/text_index-1.htm")
     tasks.append("http://www.umei.cc/p/gaoqing/rihan/text_index-1.htm")
     tasks.append("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
-    tasks.append("http://ccrt.cc/html/yazhou/")
-    tasks.append("http://ccrt.cc/html/oumei/")
+    #tasks.append("http://ccrt.cc/html/yazhou/")
+    #tasks.append("http://ccrt.cc/html/oumei/")
     tasks.append("http://www.airenti.org/Html/Type/1_1.html")
     tasks.append("http://www.airenti.org/Html/Type/2_1.html")
-
+    
     import sys
     import time
     sys.stderr = open("error.log", "a")

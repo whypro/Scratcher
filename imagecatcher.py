@@ -6,6 +6,7 @@ import urlparse
 import re
 import threading
 import Queue
+import socket
 
 from ulib import uopen, uclose, formatSize
 from urllib import unquote
@@ -15,12 +16,15 @@ IMAGE_INFO_FILE = "image_info.txt"      # 图片简介文件
 DOWNLOAD_BUFFER_SIZE = 8192             # 下载缓冲区大小（字节）
 
 class ImageCatcher(object):
-    def __init__(self, image_lister, save_path, thread_num=10):
+    def __init__(self, image_lister, save_path, thread_num=10, timeout=120):
+        socket.setdefaulttimeout(timeout)   # socket 超时时间
+        
         self.image_lister = image_lister
         self.thread_num = thread_num        # 线程数目
         
         self.outLock = threading.Lock()     # 控制台输出锁
-        self.interruptEvent = threading.Event() # 中断事件标志
+        self.interruptEvent = threading.Event() # 主线程中断事件标志
+        self.exceptionEvent = threading.Event() # 子线程异常标志
         
         self.total_size = 0                 # 下载的文件总大小
         self.spent_time = 0                 # 共花费的时间
@@ -87,9 +91,12 @@ class ImageCatcher(object):
             thread.start()
             
         self.interruptEvent.clear()
+        self.exceptionEvent.clear()
         
         try:
             while True:
+                if self.exceptionEvent.isSet():
+                    raise socket.timeout
                 alive = False
                 for thread in self.threads:
                     alive = alive or thread.isAlive()
@@ -97,7 +104,11 @@ class ImageCatcher(object):
                     break
         except KeyboardInterrupt:
             self.interruptEvent.set()
+            print u"用户强制中止主线程"
             raise KeyboardInterrupt
+        except socket.timeout:
+            print u"传输超时，主线程中止"
+            raise socket.timeout
         except:
             print u"未知异常，主线程中止"
             raise
@@ -146,15 +157,21 @@ class ImageCatcher(object):
                 self.outLock.acquire()
                 print u"用户强制中止主线程，线程 %s 已中止" % t_name
                 self.outLock.release()
-                break
+                break   # 主线程需要中止
+            except socket.timeout:
+                self.outLock.acquire()
+                print u"传输超时，线程 %s 已中止" % t_name
+                self.outLock.release()
+                break   # 主线程需要中止
             except:
+                self.outLock.acquire()
                 print u"未知异常，线程 %s 已中止" % t_name
+                self.outLock.release()
                 raise
         if False:
             self.outLock.acquire()
             print u"线程 %s 已退出" % t_name
             self.outLock.release()
-                
     
     # 通过文件静态获取图片 URL
     def _readImageUrls(self, filename, verbose=True):
@@ -283,6 +300,11 @@ class ImageCatcher(object):
                     print "%2.1f%%\r" % (float(downloaded_size * 100) / file_size),
                 else:
                     print "...\r",
+        except socket.timeout:
+            self.exceptionEvent.set()
+            raise socket.timeout
+        except:
+            raise
         finally:
             uclose(u)
             f.close()
