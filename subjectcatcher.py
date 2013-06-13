@@ -175,8 +175,8 @@ if __name__ == "__main__":
     #tp.add_job("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
     #tp.waitComplete()
     tasks = []
-    tasks.append("http://www.umei.cc/p/gaoqing/gangtai/text_index-1.htm")
     tasks.append("http://www.umei.cc/p/gaoqing/rihan/text_index-1.htm")
+    tasks.append("http://www.umei.cc/p/gaoqing/gangtai/text_index-1.htm")
     tasks.append("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
     #tasks.append("http://ccrt.cc/html/yazhou/")
     #tasks.append("http://ccrt.cc/html/oumei/")

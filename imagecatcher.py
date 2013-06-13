@@ -23,8 +23,9 @@ class ImageCatcher(object):
         self.thread_num = thread_num        # 线程数目
         
         self.outLock = threading.Lock()     # 控制台输出锁
-        self.interruptEvent = threading.Event() # 主线程中断事件标志
-        self.exceptionEvent = threading.Event() # 子线程异常标志
+        
+        self.main_thread_except_event = threading.Event() # 主线程中断事件标志
+        self.sub_thread_except_event = threading.Event()  # 子线程中断事件标志
         
         self.total_size = 0                 # 下载的文件总大小
         self.spent_time = 0                 # 共花费的时间
@@ -90,12 +91,12 @@ class ImageCatcher(object):
         for thread in self.threads:
             thread.start()
             
-        self.interruptEvent.clear()
-        self.exceptionEvent.clear()
+        self.main_thread_except_event.clear()
+        self.sub_thread_except_event.clear()
         
         try:
             while True:
-                if self.exceptionEvent.isSet():
+                if self.sub_thread_except_event.isSet():
                     raise socket.timeout
                 alive = False
                 for thread in self.threads:
@@ -103,7 +104,7 @@ class ImageCatcher(object):
                 if not alive:
                     break
         except KeyboardInterrupt:
-            self.interruptEvent.set()
+            self.main_thread_except_event.set()
             print u"用户强制中止主线程"
             raise KeyboardInterrupt
         except socket.timeout:
@@ -287,7 +288,7 @@ class ImageCatcher(object):
         start = clock()
         try:
             while True:
-                if self.interruptEvent.isSet():
+                if self.main_thread_except_event.isSet():
                     raise KeyboardInterrupt
                 buffer = u.read(DOWNLOAD_BUFFER_SIZE) 
                 if not buffer:  # EOF
@@ -301,7 +302,7 @@ class ImageCatcher(object):
                 else:
                     print "...\r",
         except socket.timeout:
-            self.exceptionEvent.set()
+            self.sub_thread_except_event.set()
             raise socket.timeout
         except:
             raise
