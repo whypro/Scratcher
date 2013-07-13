@@ -1,6 +1,6 @@
-scratcher
+Scratcher
 =========
-This is a image downloader for some SPECIFIC sites. <br />
-Do make sure that your age is over 18 before zipping this repo. <br />
-<br />
+This is a image downloader for some SPECIFIC sites.  
+Do make sure that your age is over 18 before zipping this repo.  
+
 Built by Whypro Studio, 2013-05.
