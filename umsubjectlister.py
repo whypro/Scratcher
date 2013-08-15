@@ -35,7 +35,10 @@ class UMSubjectLister(SubjectLister):
         for page in pages:
             data = self.getHtmlSrc(page)
             soup = BeautifulSoup(data, fromEncoding="gb18030")
-            sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "down_title D_list"})
+            try:
+                sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "down_title D_list"})
+            except AttributeError:  # 页面读取异常
+                continue
             # 自适应
             if not sub_links:
                 sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "title"})
