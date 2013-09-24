@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from ulib import uopen, uclose
 from BeautifulSoup import BeautifulSoup
+
+class SubjectsPageParseError(Exception):
+    pass
 
 class SubjectLister(object):
     def __init__(self, first_page):

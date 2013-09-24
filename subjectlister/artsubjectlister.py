@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import re
 from urlparse import urljoin
 from BeautifulSoup import BeautifulSoup
+
 from subjectlister import SubjectLister
 
 class ARTSubjectLister(SubjectLister):

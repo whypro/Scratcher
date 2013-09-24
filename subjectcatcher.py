@@ -6,7 +6,6 @@ import threading
 import Queue
 
 from imagecatcher import ImageCatcher
-from factory import UMFactory, CCFactory, ARTFactory
 
 class SubjectCatcher:
     def __init__(self, factory, out_of_date=10, thread_num=10):
@@ -114,90 +113,3 @@ class SubjectCatcher:
                     imageCatcher = ImageCatcher(imageLister, self.dirname, thread_num=thread_num)
                     d_subjects.append(sub)
                     self._saveSubjectUrls(d_filename, subjects=d_subjects)
-                
-
-"""
-class ThreadPool:
-    def __init__(self, work_queue, thread_num=10, timeout=10):
-        self.threads = []
-        self.work_queue = work_queue
-        self.timeout = timeout
-        self.__recruitThreads(thread_num)
-    
-    def __recruitThreads(self, thread_num):
-        for i in range(thread_num):
-            thread = SubjectCatcherThread(self.work_queue, self.timeout)
-            self.threads.append(thread)
-    
-    def start(self):
-        for thread in self.threads:
-            thread.start()
-            print u"线程 %s 已启动" % thread.getName()
-        
-    def waitComplete(self):
-        for thread in self.threads:
-            if thread.isAlive():
-                thread.join()
-            else:
-                self.threads.remove(thread)
-                print u"线程 %s 已结束" % thread.getName()
-        print u"所有线程已结束"
-        
-    def add_job(self, url):
-        self.work_queue.put(url)
-
-class SubjectCatcherThread(threading.Thread):
-    count = 0
-    def __init__(self, work_queue, timeout=10):
-        threading.Thread.__init__(self) 
-        self.work_queue = work_queue
-        self.timeout = timeout
-        SubjectCatcherThread.count += 1
-    
-    def run(self):
-        while True:
-            try:
-                url = self.work_queue.get(timeout=self.timeout)
-                print u"线程 %s 正在运行" % self.getName()
-                catcher = SubjectCatcher(CCFactory(url))
-            except Queue.Empty:
-                print u"线程 %s 已结束" % self.getName()
-                break
-"""
-
-# 获取主题
-if __name__ == "__main__":
-    #tasks = Queue.Queue()  
-    #tp = ThreadPool(tasks, 10)
-    #tp.add_job("http://ccrt.cc/html/yazhou/")
-    #tp.start()
-    #tp.add_job("http://www.umei.cc/p/gaoqing/gangtai/text_index-1.htm")
-    #tp.add_job("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
-    #tp.waitComplete()
-    tasks = []
-    tasks.append("http://www.umei.cc/p/gaoqing/rihan/text_index-1.htm")
-    tasks.append("http://www.umei.cc/p/gaoqing/gangtai/text_index-1.htm")
-    tasks.append("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
-    #tasks.append("http://ccrt.cc/html/yazhou/")
-    #tasks.append("http://ccrt.cc/html/oumei/")
-    tasks.append("http://www.airenti.org/Html/Type/1_1.html")
-    tasks.append("http://www.airenti.org/Html/Type/2_1.html")
-    
-    import sys
-    import time
-    sys.stderr = open("error.log", "a")
-    sys.stderr.write("################################################################\n")
-    sys.stderr.write(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
-    sys.stderr.write("\n")
-    import re
-    for task in tasks:
-        if re.search("umei.cc", task):
-            factory = UMFactory(task)
-        elif re.search("ccrt.cc", task):
-            factory = CCFactory(task)
-        elif re.search("airenti.org", task):
-            factory = ARTFactory(task)
-        else:
-            raise
-        catcher = SubjectCatcher(factory, out_of_date=10, thread_num=10)
-

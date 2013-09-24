@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
 from urlparse import urljoin
 from BeautifulSoup import BeautifulSoup
+
 from imagelister import ImageLister
 
 class ARTImageLister(ImageLister):

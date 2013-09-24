@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import re
 from urlparse import urljoin
 from BeautifulSoup import BeautifulSoup
+
 from subjectlister import SubjectLister
 
 class UMSubjectLister(SubjectLister):
@@ -38,7 +38,7 @@ class UMSubjectLister(SubjectLister):
             try:
                 sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "down_title D_list"})
             except AttributeError:  # 页面读取异常
-                continue
+                raise SubjectsPageParseError, '主题页读取异常'
             # 自适应
             if not sub_links:
                 sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "title"})
