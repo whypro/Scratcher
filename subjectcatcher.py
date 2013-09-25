@@ -8,10 +8,10 @@ import Queue
 from imagecatcher import ImageCatcher
 
 class SubjectCatcher:
-    def __init__(self, factory, out_of_date=10, thread_num=10):
+    def __init__(self, factory, save_path='', out_of_date=10, thread_num=10):
         self.factory = factory
         self.subject_lister = factory.createSubjectLister()
-        self.dirname = factory.getSavePath()
+        self.dirname = os.path.join(save_path, factory.getSavePath())
         self.filename = os.path.join(self.dirname, factory.getFileName())
         self.d_filename = os.path.join(self.dirname, factory.getDFileName())
         

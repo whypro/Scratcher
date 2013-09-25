@@ -24,7 +24,7 @@ class UMSubjectLister(SubjectLister):
             page = urljoin(first_page, iter["href"])
             pages.append(page)
             iter = iter.findNextSibling("a")
-            
+        
         return pages
 
     # 分析所有分页得到所有图片链接
@@ -36,12 +36,10 @@ class UMSubjectLister(SubjectLister):
             data = self.getHtmlSrc(page)
             soup = BeautifulSoup(data, fromEncoding="gb18030")
             try:
-                sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "down_title D_list"})
+                sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "title"})
             except AttributeError:  # 页面读取异常
                 raise SubjectsPageParseError, '主题页读取异常'
-            # 自适应
-            if not sub_links:
-                sub_links = soup.find("div", {"id": "msy"}).findAll("div", {"class": "title"})
+
             for sub_link in sub_links:
                 subject = urljoin(page, sub_link.a["href"])
                 subjects.append(subject)
@@ -60,7 +58,7 @@ class UMSubjectLister(SubjectLister):
         
 # 单元测试 only
 if __name__ == "__main__":
-    lister = UMSubjectLister("http://www.umei.cc/p/gaoqing/cn/text_index-1.htm")
+    lister = UMSubjectLister("http://www.umei.cc/p/gaoqing/cn/index-1.htm")
     print lister.getTitle()
     print "\n".join(lister.getPages())
     subs = lister.getSubjects()
