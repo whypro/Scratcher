@@ -67,7 +67,7 @@ if __name__ == '__main__':
         factory = None
         for url, fact in factories.items():
             if url in task:
-                factory = fact(task)
+                factory = fact(task.strip())
                 break
         if not factory:
             raise

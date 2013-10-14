@@ -315,6 +315,12 @@ class ImageCatcher(object):
             cfg_f.write("\n")
             cfg_f.close()
 
+        # 判断是否完成下载
+        if downloaded_size != file_size:
+            f = open('aborted.txt', 'a')
+            f.write(url)
+            f.write('\n')
+            f.close()
         os.rename(tmp_filename, filename)
         self.outLock.acquire()
         print u"文件已保存：%s" % os.path.abspath(filename)
